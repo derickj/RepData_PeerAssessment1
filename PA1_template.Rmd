@@ -7,19 +7,88 @@ output:
 
 
 ## Loading and preprocessing the data
-
-
+The data is loaded from the named csv file after testing whether the file exists.
+The date string is converted to a POSIX date field for easier processing later.
+```{r}
+inpfile<-"activity.csv"
+    if(!file.exists(inpfile)) {
+        msg<-paste(inpfile, "does not exist", sep=" ")
+        stop(msg)
+    }
+theData<-read.csv(inpfile, header=TRUE, na.strings="NA",stringsAsFactors=FALSE)
+theData$date<-as.Date(theData$date,"%Y-%m-%d")
+```
 
 ## What is mean total number of steps taken per day?
+Calculate the total number of steps taken per day
+```{r}
+totals<-aggregate(steps ~ date,data=theData,sum)
+head(totals)
+summary(total$steps)
+```
+Make a histogram of the total number of steps taken each day
+```{r}
+hist(totals$steps,breaks=10,col="green")
+rug(totals$steps)
+```
 
+Calculate and report the mean and median of the total number of steps per day
+```{r}
+summarytotals<-data.frame(val = unclass(summary(totals$steps)))
+```
+The mean of the total number of steps per day is `r summarytotals["Mean",]`.
 
-
+The median of the total number of steps per day is `r summarytotals["Median",]`.
 ## What is the average daily activity pattern?
+Make a time series plot of the 5-minute interval and the average number of steps taken across all days
+```{r}
+intervals<-aggregate(steps ~ interval,data=theData,mean)
+with (intervals, plot(interval,steps,type="l",col="red",ylab="Mean steps per interval"))
+```
+
+Which 5 minute interval, on average across all the days in the dataset contains the maximum number of steps?
+```{r}
+maxsteps<-max(intervals$steps)
+maxinterval<-intervals[intervals$steps==maxsteps,]
+```
+The interval containing on average the maximum number of steps is the one at `r maxinterval$interval` (`r maxsteps` steps).
+
 
 
 
 ## Imputing missing values
+Calculate and report the total number of missing values in the dataset (total number of rows containing NAs)
+```{r}
+good<-complete.cases(theData)
+incompleteData<-theData[!good,]
+nRowsIncomplete<-length(incompleteData[,1])
+```
+There are `r nRowsIncomplete` rows containing NAs
 
+Fill in all the missing values in the incomplete dataset, using the mean for the specific interval across all the days as calculated above (intervals)
 
+```{r}
+incompleteData$steps<-intervals[,2]
+```
+
+Create a new data set that is equal to the original dataset but with the missing data filled in
+```{r}
+completeData<-theData[good,]
+newData<-rbind(completeData,inCompleteData)
+newData<-newData[order(newData$date),]
+```
+
+Make a histogram of the total number of steps taken each date 
+```{r}
+newtotals<-aggregate(steps ~ date,data=newData,sum)
+hist(newtotals$steps,breaks=10,col="blue")
+rug(newtotals$steps)
+summary(newtotals$steps)
+summarynewtotals<-data.frame(val = unclass(summary(newtotals$steps)))
+```
+
+The mean of the total number of steps per day with imputed missing values is `r summarynewtotals["Mean",]` (without missing values it was `r summarytotals["Mean",]`).
+
+The median of the total number of steps per day with imputed missing values is `r summarynewtotals["Median",]` (without missing values it was `r summarytotals["Median",]`).
 
 ## Are there differences in activity patterns between weekdays and weekends?
